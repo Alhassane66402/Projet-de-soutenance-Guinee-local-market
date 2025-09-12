@@ -1,22 +1,15 @@
 const express = require("express");
 const router = express.Router();
-
-// 🔹 Vérifie bien que ton dossier est en minuscule : ../controllers/authController
-const { 
-  register, 
-  login, 
-  getProfile, 
-  updateProfile 
-} = require("../Controllers/authController");
-
+const { register, login, getProfile, updateProfile, deleteConsumerAccount } = require("../Controllers/authController");
 const { authenticate } = require("../middlewares/auth");
+const { uploadUserImages } = require("../middlewares/upload");
 
 // =============================
 // 🔐 Auth routes
 // =============================
 
-// Inscription
-router.post("/register", register);
+// Inscription avec avatar et cover
+router.post("/register", uploadUserImages, register);
 
 // Connexion
 router.post("/login", login);
@@ -25,10 +18,12 @@ router.post("/login", login);
 router.get("/me", authenticate(), getProfile);
 
 // Modifier son profil (nécessite token)
-router.put("/me", authenticate(), updateProfile);
+router.put("/me", authenticate(), uploadUserImages, updateProfile);
 
-// 🔌 (Optionnel) Déconnexion : côté serveur on ne gère pas vraiment les JWT,
-// mais ça peut aider côté client à avoir une route propre.
+// ❌ Supprimer son compte consommateur
+router.delete("/me", authenticate("consumer"), deleteConsumerAccount);
+
+// Déconnexion (optionnel)
 router.post("/logout", (req, res) => {
   res.json({ message: "Déconnexion réussie, supprimez le token côté client." });
 });

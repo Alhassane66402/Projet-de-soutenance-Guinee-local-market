@@ -15,6 +15,11 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+    telephone: {
+      type: String,
+      required: [true, "Le téléphone est requis"],
+      trim: true,
+    },
     password: {
       type: String,
       required: [true, "Le mot de passe est requis"],
@@ -27,9 +32,8 @@ const userSchema = new mongoose.Schema(
     },
     isValidated: {
       type: Boolean,
-      default: false, // Pour les producteurs : validation manuelle par l'admin
+      default: false,
     },
-    // ✅ Nouveaux champs
     adresse: {
       type: String,
       required: [true, "L'adresse est requise"],
@@ -50,21 +54,38 @@ const userSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+
+    // ✅ NOUVEAUX CHAMPS
+    avatar: {
+      type: String,
+      default: "/default-avatar.png", // image par défaut
+    },
+    cover: {
+      type: String, // photo de couverture uniquement pour producteurs
+      default: null,
+    },
+    groupName: {
+      type: String, // nom du groupe / entreprise (facultatif)
+      default: "",
+      trim: true,
+    },
+    categories: {
+      type: [String], // tableau de catégories pour les producteurs
+      default: [],
+    },
   },
   {
     timestamps: true,
     toJSON: {
       transform: function (doc, ret) {
-        delete ret.password; // Masquer le mot de passe dans les réponses JSON
+        delete ret.password; // masquer le mot de passe
         return ret;
       },
     },
   }
 );
 
-//
 // 🔐 Hachage du mot de passe avant la sauvegarde
-//
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   try {
@@ -75,9 +96,7 @@ userSchema.pre("save", async function (next) {
   }
 });
 
-//
 // 🔐 Méthode statique de login
-//
 userSchema.statics.login = async function (email, password) {
   const user = await this.findOne({ email });
   if (!user) throw new Error("Email incorrect");
@@ -88,9 +107,7 @@ userSchema.statics.login = async function (email, password) {
   return user;
 };
 
-//
-// 🔐 Méthode d’instance de comparaison de mot de passe (utile pour update par ex.)
-//
+// 🔐 Méthode d’instance de comparaison de mot de passe
 userSchema.methods.comparePassword = function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };

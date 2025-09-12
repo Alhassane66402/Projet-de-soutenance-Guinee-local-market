@@ -1,9 +1,15 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, ShoppingCart, User, Grid3X3, Heart, LayoutDashboard } from "lucide-react";
+import {
+  Home,
+  User,
+  Grid3X3,
+  LayoutDashboard,
+  Users,
+} from "lucide-react";
 import { useApp } from "../hooks/useApp";
 
 export default function BottomNav() {
-  const { cartItemsCount, wishlistItemsCount, isLoggedIn, } = useApp();
+  const { cartItemsCount, wishlistItemsCount, isLoggedIn } = useApp();
   const location = useLocation();
 
   const navItems = [
@@ -31,17 +37,12 @@ export default function BottomNav() {
       label: "Produits",
     },
     {
-      href: "/wishlist",
-      icon: Heart,
-      label: "Favoris",
-      badge: wishlistItemsCount
+      href: "/producteurs",
+      icon: Users, // Or Building2, Factory, Home
+      label: "Producteurs",
+      badge: wishlistItemsCount,
     },
-    {
-      href: "/panier",
-      icon: ShoppingCart,
-      label: "Panier",
-      badge: cartItemsCount
-    }
+    
   );
 
   // Ajouter le profil ou connexion à la fin
@@ -56,9 +57,10 @@ export default function BottomNav() {
       <div className="flex items-center justify-around py-2">
         {navItems.map((item) => {
           const Icon = item.icon;
-          let isActive = item.href === "/" 
-            ? location.pathname === item.href 
-            : location.pathname.startsWith(item.href);
+          let isActive =
+            item.href === "/"
+              ? location.pathname === item.href
+              : location.pathname.startsWith(item.href);
 
           return (
             <Link
@@ -72,9 +74,11 @@ export default function BottomNav() {
             >
               <Icon className="h-5 w-5 mb-1" />
               {item.badge > 0 && (
-                <span className={`absolute -top-1 -right-1 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center ${
-                  item.href === "/wishlist" ? "bg-red-500" : "bg-green-500"
-                }`}>
+                <span
+                  className={`absolute -top-1 -right-1 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center ${
+                    item.href === "/wishlist" ? "bg-red-500" : "bg-green-500"
+                  }`}
+                >
                   {item.badge}
                 </span>
               )}

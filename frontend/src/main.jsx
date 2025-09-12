@@ -5,7 +5,7 @@ import MainLayout from "./layouts/MainLayout";
 import Home from "./pages/Home";
 import Panier from "./pages/Panier";
 import Dashboard from "./pages/Dashboard";
-import AdminDashboard from "./pages/AdminDashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import "./index.css";
 import Products from "./pages/Products";
 import About from "./pages/About";
@@ -15,6 +15,11 @@ import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import { useApp } from "./hooks/useApp";
 import { AppProvider } from "./context/AppContext";
+import Producers from "./pages/Producers"; // Liste publique des producteurs
+import ProducerProducts from "./pages/ProducerDetail"; // Produits d’un producteur
+import ProducerDashboard from "./pages/ProducerDashboard"; // Dashboard producteur (privé)
+import ProducerDetail from "./pages/ProducerDetail";
+import AdminUsers from "./pages/admin/AdminUsers";
 
 // Composant pour protéger les routes selon le rôle
 const PrivateRoute = ({ children, allowedRoles }) => {
@@ -45,6 +50,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="inscription" element={<Register />} />
             <Route path="profile" element={<Profile />} />
 
+            {/* ROUTES PRODUCTEURS PUBLICS */}
+            <Route path="producteurs" element={<Producers />} />
+            <Route path="producteurs/:id" element={<ProducerDetail />} />
+
             {/* Dashboard client */}
             <Route
               path="dashboard"
@@ -55,7 +64,16 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               }
             />
 
-            {/* Dashboard admin */}
+            {/* Dashboard producteur */}
+            <Route
+              path="producteur-dashboard"
+              element={
+                <PrivateRoute allowedRoles={["producer"]}>
+                  <ProducerDashboard />
+                </PrivateRoute>
+              }
+            />
+
             <Route
               path="admin"
               element={
@@ -63,7 +81,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                   <AdminDashboard />
                 </PrivateRoute>
               }
-            />
+            >
+              <Route path="utilisateurs" element={<AdminUsers />} />
+            </Route>
           </Route>
         </Routes>
       </AppProvider>

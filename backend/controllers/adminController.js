@@ -1,5 +1,23 @@
 const User = require('../models/User');
 
+// 🔹 Récupérer tous les utilisateurs (admin uniquement)
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password"); // on enlève le mot de passe
+
+    if (users.length === 0) {
+      return res.status(200).json({ message: "Aucun utilisateur trouvé" });
+    }
+
+    res.status(200).json(users);
+  } catch (err) {
+    res.status(500).json({
+      message: "Erreur lors de la récupération des utilisateurs",
+      error: err.message,
+    });
+  }
+};
+
 // 🔹 Récupérer et afficher tous les producteurs en attente de validation
 exports.getPendingProducers = async (req, res) => {
   try {

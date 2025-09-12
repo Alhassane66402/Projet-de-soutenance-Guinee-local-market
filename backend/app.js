@@ -2,6 +2,7 @@ const express = require("express");
 const connectDB = require("./config/db");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const path = require("path");
 
 dotenv.config();
 const app = express();
@@ -21,6 +22,8 @@ app.use("/api/orders", require("./routes/order.routes"));
 app.use("/api/producers", require("./routes/producer.routes"));
 app.use("/api/admin", require("./routes/admin.routes"));
 // ... d'autres routes à venir
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 
 // Lancer serveur
 const PORT = process.env.PORT || 3000;

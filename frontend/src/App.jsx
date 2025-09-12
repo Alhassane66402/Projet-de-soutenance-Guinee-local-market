@@ -13,6 +13,8 @@ import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import SearchResults from "./pages/SearchResults";
+import Producers from "./pages/Producers"; // Page liste des producteurs
+import ProducerProducts from "./pages/ProducerDetail"; // Page des produits d’un producteur
 
 // Composants privés
 import Dashboard from "./pages/Dashboard";
@@ -21,7 +23,9 @@ import Orders from "./pages/Orders";
 import Wishlist from "./pages/Wishlist";
 import Cart from "./pages/Cart";
 import Profile from "./pages/Profile";
-import AdminDashboard from "./pages/AdminDashboard";
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import ProducerDashboard from "./pages/ProducerDashboard";
 
 // 🔒 Route privée
@@ -53,7 +57,6 @@ function App() {
     <AppProvider>
       <BrowserRouter>
         <div className="min-h-screen flex flex-col bg-gray-50">
-          <Navbar />
           <main className="flex-grow mb-8">
             <Routes>
               {/* ROUTES PUBLIQUES */}
@@ -62,6 +65,12 @@ function App() {
               <Route path="/produit/:id" element={<ProductDetail />} />
               <Route path="/a-propos" element={<About />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/producteurs" element={<Producers />} />
+              <Route path="/producers/:id" element={<ProducerDetail />} />
+              <Route
+                path="/producteur/:id/produits"
+                element={<ProducerProducts />}
+              />
               <Route
                 path="/connexion"
                 element={
@@ -142,19 +151,22 @@ function App() {
 
               {/* ROUTES ADMIN */}
               <Route
-                path="/admin"
+                path="admin"
                 element={
                   <PrivateRoute allowedRoles={["admin"]}>
-                    <AdminDashboard />
+                    <AdminLayout />
                   </PrivateRoute>
                 }
-              />
+              >
+                <Route index element={<AdminDashboard />} /> {/* /admin */}
+                <Route path="utilisateurs" element={<AdminUsers />} />{" "}
+                {/* /admin/utilisateurs */}
+              </Route>
 
               {/* REDIRECTION POUR ROUTE INCONNUE */}
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </main>
-          <Footer />
         </div>
       </BrowserRouter>
     </AppProvider>
