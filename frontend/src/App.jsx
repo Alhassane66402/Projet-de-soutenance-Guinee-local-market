@@ -1,32 +1,30 @@
-import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AppProvider, useApp } from "./hooks/useApp";
 
 // Composants publics
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Products from "./pages/Products";
-import ProductDetail from "./pages/ProductDetail";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import SearchResults from "./pages/SearchResults";
-import Producers from "./pages/Producers"; // Page liste des producteurs
-import ProducerProducts from "./pages/ProducerDetail"; // Page des produits d’un producteur
+import Producers from "./pages/Producers";
+import ProducerDetail from "./pages/ProducerDetail"; // Correction: import ajouté
 
 // Composants privés
 import Dashboard from "./pages/Dashboard";
-import Account from "./pages/Account";
-import Orders from "./pages/Orders";
-import Wishlist from "./pages/Wishlist";
-import Cart from "./pages/Cart";
 import Profile from "./pages/Profile";
 import AdminLayout from "./pages/admin/AdminLayout";
-import AdminUsers from "./pages/admin/AdminUsers";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminProducers from "./pages/admin/AdminProducers"; // Ajout des autres pages admin
+import AdminProducts from "./pages/admin/AdminProducts";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminSales from "./pages/admin/AdminSales";
+import AdminMessages from "./pages/admin/AdminMessages";
 import ProducerDashboard from "./pages/ProducerDashboard";
+import { useApp } from "./hooks/useApp";
+import { AppProvider } from "./context/AppContext";
+import MainLayout from "./layouts/MainLayout";
+import AdminUsers from "./pages/admin/AdminUsers";
 
 // 🔒 Route privée
 const PrivateRoute = ({ children, allowedRoles }) => {
@@ -40,6 +38,7 @@ const PrivateRoute = ({ children, allowedRoles }) => {
     // Redirection selon le rôle
     if (user?.role === "client") return <Navigate to="/dashboard" />;
     if (user?.role === "producer") return <Navigate to="/producteur" />;
+    if (user?.role === "admin") return <Navigate to="/admin/" />;
     return <Navigate to="/" />; // Redirection par défaut
   }
 
@@ -55,22 +54,18 @@ const PublicRoute = ({ children }) => {
 function App() {
   return (
     <AppProvider>
-      <BrowserRouter>
-        <div className="min-h-screen flex flex-col bg-gray-50">
-          <main className="flex-grow mb-8">
-            <Routes>
-              {/* ROUTES PUBLIQUES */}
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <main className="flex-grow mb-8">
+          <Routes>
+            {/* ROUTES PUBLIQUES */}
+            <Route path="/" element={<MainLayout />}>
               <Route path="/" element={<Home />} />
               <Route path="/produits" element={<Products />} />
-              <Route path="/produit/:id" element={<ProductDetail />} />
               <Route path="/a-propos" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/producteurs" element={<Producers />} />
-              <Route path="/producers/:id" element={<ProducerDetail />} />
-              <Route
-                path="/producteur/:id/produits"
-                element={<ProducerProducts />}
-              />
+              <Route path="/producteur/:id" element={<ProducerDetail />} />{" "}
+              {/* Correction: chemin cohérent */}
               <Route
                 path="/connexion"
                 element={
@@ -87,88 +82,61 @@ function App() {
                   </PublicRoute>
                 }
               />
-              <Route path="/recherche" element={<SearchResults />} />
+            
 
-              {/* ROUTES PRIVÉES */}
-              <Route
-                path="/dashboard"
-                element={
-                  <PrivateRoute allowedRoles={["client"]}>
-                    <Dashboard />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/compte"
-                element={
-                  <PrivateRoute allowedRoles={["client", "producer", "admin"]}>
-                    <Account />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/commandes"
-                element={
-                  <PrivateRoute allowedRoles={["client", "producer", "admin"]}>
-                    <Orders />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/favoris"
-                element={
-                  <PrivateRoute allowedRoles={["client", "producer", "admin"]}>
-                    <Wishlist />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/panier"
-                element={
-                  <PrivateRoute allowedRoles={["client", "producer", "admin"]}>
-                    <Cart />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <PrivateRoute allowedRoles={["client", "producer", "admin"]}>
-                    <Profile />
-                  </PrivateRoute>
-                }
-              />
+            {/* ROUTES PRIVÉES */}
+            <Route
+              path="/dashboard"
+              element={
+                <PrivateRoute allowedRoles={["client"]}>
+                  <Dashboard />
+                </PrivateRoute>
+              }
+            />
 
-              {/* ROUTES PRODUCTEUR */}
-              <Route
-                path="/producteur"
-                element={
-                  <PrivateRoute allowedRoles={["producer"]}>
-                    <ProducerDashboard />
-                  </PrivateRoute>
-                }
-              />
+            <Route
+              path="/profile"
+              element={
+                <PrivateRoute allowedRoles={["client", "producer", "admin"]}>
+                  <Profile />
+                </PrivateRoute>
+              }
+            />
 
-              {/* ROUTES ADMIN */}
-              <Route
-                path="admin"
-                element={
-                  <PrivateRoute allowedRoles={["admin"]}>
-                    <AdminLayout />
-                  </PrivateRoute>
-                }
-              >
-                <Route index element={<AdminDashboard />} /> {/* /admin */}
-                <Route path="utilisateurs" element={<AdminUsers />} />{" "}
-                {/* /admin/utilisateurs */}
-              </Route>
+            {/* ROUTES PRODUCTEUR */}
+            <Route
+              path="/producteur"
+              element={
+                <PrivateRoute allowedRoles={["producer"]}>
+                  <ProducerDashboard />
+                </PrivateRoute>
+              }
+            />
 
-              {/* REDIRECTION POUR ROUTE INCONNUE */}
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-          </main>
-        </div>
-      </BrowserRouter>
+            {/* ROUTES ADMIN - Structure corrigée */}
+            <Route
+              path="/admin/*"
+              element={
+                <PrivateRoute allowedRoles={["admin"]}>
+                  <AdminLayout />
+                </PrivateRoute>
+              }
+            >
+              <Route index element={<AdminDashboard />} />
+              <Route path="utilisateurs" element={<AdminUsers />} />
+              <Route path="producteurs" element={<AdminProducers />} />
+              <Route path="produits" element={<AdminProducts />} />
+              <Route path="commandes" element={<AdminOrders />} />
+              <Route path="ventes" element={<AdminSales />} />
+              <Route path="messages" element={<AdminMessages />} />
+            </Route>
+
+            {/* REDIRECTION POUR ROUTE INCONNUE */}
+            <Route path="*" element={<Navigate to="/" />} />
+          </Route>
+          </Routes>
+        </main>
+      </div>
     </AppProvider>
   );
 }

@@ -7,7 +7,11 @@ export const fetchAllProducers = async () => {
     const response = await api.get("/admin/producers");
     return response.data;
   } catch (error) {
-    throw error.response?.data?.message || error.message || "Erreur lors de la récupération des producteurs";
+    throw (
+      error.response?.data?.message ||
+      error.message ||
+      "Erreur lors de la récupération des producteurs"
+    );
   }
 };
 
@@ -17,7 +21,11 @@ export const fetchPendingProducers = async () => {
     const response = await api.get("/admin/pending-producers");
     return response.data;
   } catch (error) {
-    throw error.response?.data?.message || error.message || "Erreur lors de la récupération des producteurs en attente";
+    throw (
+      error.response?.data?.message ||
+      error.message ||
+      "Erreur lors de la récupération des producteurs en attente"
+    );
   }
 };
 
@@ -27,7 +35,11 @@ export const validateProducer = async (producerId) => {
     const response = await api.put(`/admin/validate-producer/${producerId}`);
     return response.data;
   } catch (error) {
-    throw error.response?.data?.message || error.message || "Erreur lors de la validation du producteur";
+    throw (
+      error.response?.data?.message ||
+      error.message ||
+      "Erreur lors de la validation du producteur"
+    );
   }
 };
 
@@ -37,6 +49,34 @@ export const fetchAllUsers = async () => {
     const response = await api.get("/admin/users");
     return response.data;
   } catch (error) {
-    throw error.response?.data?.message || error.message || "Erreur lors de la récupération des utilisateurs";
+    throw (
+      error.response?.data?.message ||
+      error.message ||
+      "Erreur lors de la récupération des utilisateurs"
+    );
+  }
+};
+
+// ✅ Récupérer le détail d'un utilisateur
+export const fetchUserDetail = async (userId) => {
+  try {
+    const response = await api.get(`/admin/users/${userId}`);
+    return response.data;
+  } catch (error) {
+    throw (
+      error.response?.data?.message ||
+      error.message ||
+      "Erreur lors de la récupération des détails de l'utilisateur"
+    );
+  }
+};
+
+// Bloquer ou débloquer un utilisateur
+export const toggleBlockUser = async (userId) => {
+  try {
+    const response = await api.put(`/admin/users/${userId}/block`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || "Erreur lors du blocage/déblocage";
   }
 };

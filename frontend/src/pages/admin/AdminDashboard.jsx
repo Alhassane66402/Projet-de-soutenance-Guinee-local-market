@@ -1,8 +1,5 @@
-// src/pages/admin/AdminDashboard.jsx
-import React, { useState } from "react";
-import { User, Package, ShoppingBag, DollarSign, Sidebar, X } from "lucide-react";
-import AdminSidebar from "../../components/admin/AdminSidebar"; // ton composant sidebar
-import Footer from "../../components/Footer";
+
+import { User, Package, ShoppingBag } from "lucide-react";
 
 // Données statiques
 const adminStats = [
@@ -19,45 +16,10 @@ const recentOrders = [
 ];
 
 const AdminDashboard = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      {/* Overlay mobile */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar mobile */}
-      <div
-        className={`fixed top-12 left-0 w-64 h-full bg-white shadow-lg z-50 lg:hidden overflow-y-auto transform transition-transform duration-300 ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <AdminSidebar isMobile={true} onClose={() => setIsSidebarOpen(false)} />
-      </div>
-
-      {/* Sidebar desktop */}
-      <div className="hidden lg:block w-64 fixed top-15 left-0 h-full bg-white shadow-lg z-30">
-        <AdminSidebar />
-      </div>
-
-      {/* Bouton toggle mobile */}
-      {!isSidebarOpen && (
-        <button
-          className="fixed top-14 left-4 z-40 lg:hidden p-2 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition-colors cursor-pointer"
-          onClick={() => setIsSidebarOpen(true)}
-          aria-label="Ouvrir le menu"
-        >
-          <Sidebar size={20} />
-        </button>
-      )}
-
+    <div>
       {/* Contenu principal */}
-      <main className="flex-1 ml-0 lg:ml-64 px-4 py-8 md:p-8 overflow-y-auto space-y-8">
         <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">Tableau de bord Admin</h1>
 
         {/* Statistiques */}
@@ -78,7 +40,7 @@ const AdminDashboard = () => {
         </section>
 
         {/* Dernières commandes */}
-        <section className="overflow-x-auto bg-white rounded-lg shadow-md p-4 md:p-6">
+        <section className="overflow-x-auto mt-5 mb-5 bg-white rounded-lg shadow-md p-4 md:p-6">
           <div className="flex justify-between items-center mb-4 md:mb-6">
             <h2 className="text-lg md:text-xl font-semibold">Dernières commandes</h2>
           </div>
@@ -115,8 +77,6 @@ const AdminDashboard = () => {
             </tbody>
           </table>
         </section>
-        <Footer />
-      </main>
     </div>
   );
 };

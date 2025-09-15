@@ -73,6 +73,10 @@ const userSchema = new mongoose.Schema(
       type: [String], // tableau de catégories pour les producteurs
       default: [],
     },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

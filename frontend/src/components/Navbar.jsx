@@ -240,7 +240,7 @@ export default function Navbar() {
                           <span className="font-medium">{user.name}</span>
                         </div>
                         <Link
-                          to="/dashboard"
+                          to="/admin"
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-green-100 hover:text-green-600 whitespace-nowrap"
                           onClick={() => setIsUserMenuOpen(false)}
                         >

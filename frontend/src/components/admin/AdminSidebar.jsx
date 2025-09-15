@@ -1,5 +1,5 @@
 // frontend/src/components/admin/AdminSidebar.jsx
-import React from "react";
+
 import { Link, useLocation } from "react-router-dom";
 import { User, Package, ShoppingBag, DollarSign, MessageSquare, LogOut, X } from "lucide-react";
 
@@ -18,6 +18,7 @@ const AdminSidebar = ({ isMobile = false, onClose = () => {} }) => {
 
   return (
     <div className="flex flex-col">
+    
       {/* Header (bouton fermeture sur mobile) */}
       {isMobile && (
         <div className="p-5 border-b relative">

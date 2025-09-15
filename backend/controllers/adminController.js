@@ -1,5 +1,6 @@
 const User = require('../models/User');
-
+const fs = require("fs");
+const path = require("path");
 // 🔹 Récupérer tous les utilisateurs (admin uniquement)
 exports.getAllUsers = async (req, res) => {
   try {
@@ -69,6 +70,60 @@ try {
   } catch (err) {
     res.status(500).json({
       message: "Erreur lors de la récupération des producteurs",
+      error: err.message,
+    });
+  }
+};
+
+
+
+// 🔹 Bloquer / Débloquer un utilisateur (admin uniquement)
+exports.blockUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // Vérifier que l'utilisateur existe
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "Utilisateur non trouvé" });
+    }
+
+    // Inverser le statut de blocage
+    user.isBlocked = !user.isBlocked;
+    await user.save();
+
+    res.status(200).json({
+      message: user.isBlocked
+        ? "Utilisateur bloqué avec succès"
+        : "Utilisateur débloqué avec succès",
+      user,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Erreur lors du blocage/déblocage de l'utilisateur",
+      error: err.message,
+    });
+  }
+};
+
+
+// 🔹 Récupérer les informations d'un utilisateur par ID (admin uniquement)
+exports.getUserDetail = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await User.findById(userId).select(
+      "-password"
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "Utilisateur non trouvé" });
+    }
+
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(500).json({
+      message: "Erreur lors de la récupération des détails de l'utilisateur",
       error: err.message,
     });
   }
