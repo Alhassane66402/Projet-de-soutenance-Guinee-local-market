@@ -18,7 +18,7 @@ const recentOrders = [
 const AdminDashboard = () => {
 
   return (
-    <div>
+    <div className="mt-18 md:mt-20 lg:mt-10">
       {/* Contenu principal */}
         <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">Tableau de bord Admin</h1>
 

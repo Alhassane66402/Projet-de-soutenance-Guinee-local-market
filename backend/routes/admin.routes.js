@@ -7,7 +7,12 @@ const {
   getPendingProducers,
   getAllUsers, // ✅ importer la nouvelle fonction
   getUserDetail,
-  blockUser
+  blockUser,
+  deleteProducer,
+  validateProduct,
+  refuseProduct,
+  getAllProducts,
+  deleteRefusedProduct
 } = require("../controllers/adminController");
 
 // ============================
@@ -31,5 +36,20 @@ router.get("/users/:id", authenticate("admin"), getUserDetail);
 
 // Bloquer / Débloquer un utilisateur
 router.put("/users/:id/block", authenticate("admin") ,blockUser);
+
+// Bloquer / Débloquer un utilisateur
+router.delete('/delete-producer/:id', authenticate("admin"), deleteProducer);
+
+//  Récupérer tous les produits
+router.get("/products", authenticate("admin"), getAllProducts);
+
+//  Validation des produits
+router.put("/validate-product/:id", authenticate("admin"), validateProduct);
+
+//  Refus des produits
+router.put("/refuse-product/:id", authenticate("admin"), refuseProduct);
+
+// 🔹 Supprimer un produit refusé
+router.delete("/delete-product/:id", authenticate("admin"), deleteRefusedProduct);
 
 module.exports = router;

@@ -21,9 +21,7 @@ app.use("/api/products", require("./routes/product.routes"));
 app.use("/api/orders", require("./routes/order.routes"));
 app.use("/api/producers", require("./routes/producer.routes"));
 app.use("/api/admin", require("./routes/admin.routes"));
-// ... d'autres routes à venir
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
+app.use("/api/negotiations", require("./routes/negotiation.routes")); // Nouvelle route pour les négociations
 
 // Lancer serveur
 const PORT = process.env.PORT || 3000;

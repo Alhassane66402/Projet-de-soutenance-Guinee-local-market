@@ -8,8 +8,8 @@ exports.register = async (req, res) => {
   try {
     const {
       name, email, password, role,
-      adresse, ville, region, telephone,
-      groupName, categories
+      adresse, ville, region, telephone, bio,
+      groupName, categories, 
     } = req.body;
 
     if (!name || !email || !password || !telephone || !adresse || !ville || !region) {
@@ -37,6 +37,7 @@ exports.register = async (req, res) => {
       ville: ville.trim(),
       region: region.trim(),
       telephone: telephone.trim(),
+      bio: bio.trim(),
       avatar,
       cover,
       groupName: role === "producer" ? groupName?.trim() || "" : "",

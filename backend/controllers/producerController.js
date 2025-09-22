@@ -3,7 +3,6 @@ const fs = require("fs");
 const path = require("path");
 const Product = require("../models/Product"); // si tu veux supprimer aussi ses produits
 
-
 // 🔍 Obtenir tous les producteurs validés (PUBLIC)
 exports.getValidatedProducers = async (req, res) => {
   try {
@@ -11,7 +10,7 @@ exports.getValidatedProducers = async (req, res) => {
       role: "producer",
       isValidated: true,
     }).select(
-      "_id name avatar cover groupName categories adresse ville region bio telephone createdAt"
+      "_id name avatar cover groupName categories adresse ville region bio telephone isBlocked createdAt"
     );
 
     return res.status(200).json(producers);
@@ -60,11 +59,13 @@ exports.getProducerById = async (req, res) => {
       role: "producer",
       isValidated: true,
     }).select(
-      "_id name email telephone role adresse ville region bio avatar cover groupName categories createdAt"
+      "_id name email telephone role adresse ville region bio avatar cover groupName categories isBlocked createdAt"
     );
 
     if (!producer) {
-      return res.status(404).json({ message: "Producteur introuvable ou non validé" });
+      return res
+        .status(404)
+        .json({ message: "Producteur introuvable ou non validé" });
     }
 
     return res.status(200).json(producer);
@@ -84,8 +85,15 @@ exports.updateProducerProfile = async (req, res) => {
     }
 
     const allowedFields = [
-      "bio", "adresse", "ville", "region", "telephone",
-      "avatar", "cover", "groupName", "categories"
+      "bio",
+      "adresse",
+      "ville",
+      "region",
+      "telephone",
+      "avatar",
+      "cover",
+      "groupName",
+      "categories",
     ];
     const updates = {};
 
@@ -95,11 +103,11 @@ exports.updateProducerProfile = async (req, res) => {
       }
     });
 
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user._id,
-      updates,
-      { new: true, runValidators: true, context: "query" }
-    ).select(
+    const updatedUser = await User.findByIdAndUpdate(req.user._id, updates, {
+      new: true,
+      runValidators: true,
+      context: "query",
+    }).select(
       "_id name email telephone role adresse ville region bio avatar cover groupName categories createdAt"
     );
 
@@ -119,6 +127,38 @@ exports.updateProducerProfile = async (req, res) => {
   }
 };
 
+// 🔍 Obtenir tous les produits d’un producteur par ID (PUBLIC)
+exports.getProductsByProducer = async (req, res) => {
+  try {
+    const { id } = req.params; // Vérifier que le producteur existe et est validé
+
+    const producer = await User.findOne({
+      _id: id,
+      role: "producer",
+      isValidated: true,
+    }).select("_id"); // On n'a besoin que de l'ID ici
+
+    if (!producer) {
+      return res
+        .status(404)
+        .json({ message: "Producteur introuvable ou non validé" });
+    } // Récupérer ses produits
+
+    const products = await Product.find({ producer: id })
+      .select(
+        "_id name description price category image status isUnavailable createdAt"
+      )
+      .sort({ createdAt: -1 }); // tri par date décroissante // ✅ Renvoyer directement le tableau de produits
+
+    return res.status(200).json(products);
+  } catch (err) {
+    return res.status(500).json({
+      message: "Erreur lors de la récupération des produits du producteur",
+      error: err.message,
+    });
+  }
+};
+
 // 🗑️ Supprimer son propre compte producteur
 exports.deleteProducerProfile = async (req, res) => {
   try {
@@ -132,14 +172,17 @@ exports.deleteProducerProfile = async (req, res) => {
     }
 
     if (user.role !== "producer") {
-      return res.status(403).json({ message: "Accès réservé uniquement aux producteurs" });
+      return res
+        .status(403)
+        .json({ message: "Accès réservé uniquement aux producteurs" });
     }
 
     // ✅ Supprimer avatar si existe
     if (user.avatar && user.avatar.startsWith("/uploads/")) {
       const avatarPath = path.join(__dirname, "..", user.avatar);
       fs.unlink(avatarPath, (err) => {
-        if (err) console.warn("Impossible de supprimer l'avatar :", err.message);
+        if (err)
+          console.warn("Impossible de supprimer l'avatar :", err.message);
       });
     }
 
@@ -147,7 +190,8 @@ exports.deleteProducerProfile = async (req, res) => {
     if (user.cover && user.cover.startsWith("/uploads/")) {
       const coverPath = path.join(__dirname, "..", user.cover);
       fs.unlink(coverPath, (err) => {
-        if (err) console.warn("Impossible de supprimer le cover :", err.message);
+        if (err)
+          console.warn("Impossible de supprimer le cover :", err.message);
       });
     }
 
@@ -158,7 +202,8 @@ exports.deleteProducerProfile = async (req, res) => {
     await User.findByIdAndDelete(user._id);
 
     return res.status(200).json({
-      message: "Votre compte producteur et vos produits ont été supprimés avec succès",
+      message:
+        "Votre compte producteur et vos produits ont été supprimés avec succès",
     });
   } catch (err) {
     return res.status(500).json({

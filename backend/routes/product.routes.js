@@ -1,3 +1,4 @@
+// src/routes/product.routes.js
 const express = require("express");
 const router = express.Router();
 const { authenticate } = require("../middlewares/auth");
@@ -16,12 +17,14 @@ router.post(
   productController.createProduct
 );
 
+// ✅ Routes statiques et spécifiques en premier
+// Lire tous les produits validés (public)
+router.get("/validated", productController.getValidatedProducts);
+
 // Lire tous les produits (public)
 router.get("/", productController.getAllProducts);
 
-// Lire un produit par ID (public)
-router.get("/:id", productController.getProductById);
-
+// ⚠️ Routes dynamiques après les routes statiques
 // Modifier un produit (avec upload image)
 router.put(
   "/:id",
@@ -31,6 +34,21 @@ router.put(
 );
 
 // Supprimer un produit
-router.delete("/:id", authenticate("producer"), productController.deleteProduct);
+router.delete(
+  "/:id",
+  authenticate("producer"),
+  productController.deleteProduct
+);
+
+// Toggle disponibilité produit
+router.patch(
+  "/:id/availability",
+  authenticate("producer"),
+  productController.toggleProductAvailability
+);
+
+// ✅ Lire un produit par ID (public)
+router.get("/:id", productController.getProductById);
+
 
 module.exports = router;

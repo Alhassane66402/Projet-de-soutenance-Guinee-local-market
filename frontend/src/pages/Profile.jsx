@@ -10,6 +10,8 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import api from "../utils/axios";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 export default function ProfilePage() {
   // États principaux
@@ -179,8 +181,10 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto space-y-6">
+      
+    <div className="mt-20">
+      <Navbar />
+      <div className="max-w-4xl mb-8 mx-auto space-y-6">
         {/* ===== Header Profil ===== */}
         <div className="bg-gradient-to-r from-green-100 to-green-50 p-6 rounded-xl shadow-xl flex flex-col md:flex-row items-center gap-6 hover:scale-105 transition-transform duration-300">
           <div className="relative">
@@ -565,6 +569,7 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

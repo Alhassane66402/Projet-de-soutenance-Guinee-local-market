@@ -4,6 +4,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "lucide-react";
 import Footer from "../../components/Footer";
 import AdminSidebar from "../../components/admin/AdminSidebar";
+import Navbar from "../../components/Navbar";
 
 const AdminLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -11,6 +12,7 @@ const AdminLayout = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
+      <Navbar />
       {/* Overlay mobile */}
       {isSidebarOpen && (
         <div

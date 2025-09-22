@@ -9,9 +9,12 @@ import {
   Lock,
   Unlock,
 } from "lucide-react";
-import { fetchAllProducers, toggleBlockUser } from "../../services/adminService";
+import {
+  fetchAllProducers,
+  toggleBlockUser,
+} from "../../services/adminService";
 import ModalProducers from "../../components/admin/ModalProducers";
-import Notification from "../../components/admin/Notification";
+import Notification from "../../components/Notification";
 
 const initialState = {
   producers: [],
@@ -43,6 +46,11 @@ function reducer(state, action) {
         ),
         confirmation: action.message || null,
       };
+    case "SET_MESSAGE":
+      return {
+        ...state,
+        confirmation: action.payload,
+      };
     default:
       throw new Error("Action non supportée.");
   }
@@ -51,11 +59,11 @@ function reducer(state, action) {
 export default function AdminProducers() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [notificationType, setNotificationType] = useState("success");
-
-  const roleColors = {
-    premium: "bg-purple-100 text-purple-800",
-    standard: "bg-green-100 text-green-800",
-  };
+  const [currentPage, setCurrentPage] = useState(1);
+  const [producersPerPage, setProducersPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [cityFilter, setCityFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   // Charger les producteurs
   useEffect(() => {
@@ -89,17 +97,19 @@ export default function AdminProducers() {
     dispatch({ type: "OPEN_MODAL", payload: producer });
   };
 
-  const handleToggleBlock = async (producerId) => {
+  const handleToggleBlock = async (userId) => {
     try {
-      const res = await toggleBlockUser(producerId);
+      const res = await toggleBlockUser(userId);
 
-      // Notification type : bloqué = rouge, débloqué = vert
-      const isBlocking = res.producer.isBlocked;
+      if (!res || !res.user)
+        throw new Error("Producteur introuvable dans la réponse");
+
+      const isBlocking = res.user.isBlocked;
       setNotificationType(isBlocking ? "error" : "success");
 
       dispatch({
         type: "UPDATE_PRODUCER",
-        payload: res.producer,
+        payload: res.user,
         message: res.message,
       });
     } catch (err) {
@@ -110,6 +120,44 @@ export default function AdminProducers() {
     }
   };
 
+  // Mise à jour après validation / suppression depuis le modal
+  const handleUpdateProducer = (updatedProducer, type = "success") => {
+    if (type === "delete") {
+      const updatedList = state.producers.filter(
+        (p) => p._id !== updatedProducer._id
+      );
+      dispatch({
+        type: "FETCH_SUCCESS",
+        payload: updatedList,
+      });
+      setNotificationType("error");
+      dispatch({
+        type: "SET_MESSAGE",
+        payload: "Producteur supprimé avec succès",
+      });
+    } else if (type === "success") {
+      setNotificationType("success");
+      dispatch({
+        type: "UPDATE_PRODUCER",
+        payload: updatedProducer,
+        message: "Producteur validé avec succès",
+      });
+    } else if (type === "error") {
+      setNotificationType("error");
+      dispatch({
+        type: "SET_MESSAGE",
+        payload: "Une erreur est survenue. Veuillez réessayer.",
+      });
+    }
+  };
+
+  // Gérer le changement du nombre de producteurs par page
+  const handleProducersPerPageChange = (e) => {
+    const newPerPage = Number(e.target.value);
+    setProducersPerPage(newPerPage);
+    setCurrentPage(1); // Réinitialiser à la première page
+  };
+
   if (state.loading) {
     return (
       <div className="p-6 flex justify-center items-center h-full">
@@ -118,9 +166,39 @@ export default function AdminProducers() {
     );
   }
 
+  // Obtenir les villes uniques pour le filtre
+  const uniqueCities = [
+    "",
+    ...new Set(state.producers.map((producer) => producer.ville)),
+  ].filter(Boolean);
+
+  // Filtrer les producteurs en fonction de la recherche et des filtres
+  const filteredProducers = state.producers.filter((producer) => {
+    const matchesSearch = Object.values(producer).some(
+      (value) =>
+        typeof value === "string" &&
+        value.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const matchesCity = cityFilter === "all" || producer.ville === cityFilter;
+    const matchesStatus =
+      statusFilter === "all" || producer.isValidated.toString() === statusFilter;
+
+    return matchesSearch && matchesCity && matchesStatus;
+  });
+
+  // Calculer les indices et les données de pagination
+  const indexOfLastProducer = currentPage * producersPerPage;
+  const indexOfFirstProducer = indexOfLastProducer - producersPerPage;
+  const currentProducers = filteredProducers.slice(
+    indexOfFirstProducer,
+    indexOfLastProducer
+  );
+  const totalPages = Math.ceil(filteredProducers.length / producersPerPage);
+
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Gestion des producteurs</h1>
+    <div className="mt-18 md:mt-20 lg:mt-10">
+      <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">Gestion des producteurs</h1>
 
       {/* Notifications */}
       {state.confirmation && (
@@ -138,64 +216,152 @@ export default function AdminProducers() {
         />
       )}
 
+      {/* En-tête avec filtres et recherche */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-4 gap-4">
+        {/* Conteneur pour les selects */}
+        <div className="flex flex-wrap gap-4 items-start">
+          {/* Nombre de producteurs par page */}
+          <div className="flex flex-col">
+            <label htmlFor="producersPerPage" className="text-gray-700 font-medium mb-1">
+              Producteurs par page :
+            </label>
+            <select
+              id="producersPerPage"
+              value={producersPerPage}
+              onChange={handleProducersPerPageChange}
+              className="px-2 py-1 border border-gray-300 rounded-md"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+
+          {/* Filtres de sélection */}
+          <div className="flex flex-wrap gap-4">
+            {/* Filtre par ville */}
+            <div className="flex flex-col">
+              <label htmlFor="cityFilter" className="text-gray-700 font-medium mb-1">
+                Ville :
+              </label>
+              <select
+                id="cityFilter"
+                value={cityFilter}
+                onChange={(e) => {
+                  setCityFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1 border border-gray-300 rounded-md"
+              >
+                <option value="all">Toutes</option>
+                {uniqueCities.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filtre par statut */}
+            <div className="flex flex-col">
+              <label htmlFor="statusFilter" className="text-gray-700 font-medium mb-1">
+                Statut :
+              </label>
+              <select
+                id="statusFilter"
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1 border border-gray-300 rounded-md"
+              >
+                <option value="all">Tous</option>
+                <option value="true">Validé</option>
+                <option value="false">Non validé</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Champ de recherche */}
+        <div className="w-full md:w-1/3 flex flex-col items-start">
+          <label htmlFor="search-field" className="text-gray-700 font-medium mb-1">
+            Filtrer :
+          </label>
+          <input
+            id="search-field"
+            type="text"
+            placeholder="Nom, prénom, ville, email, telephone..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
       <div className="overflow-x-auto rounded-lg shadow-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Nom
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                N°
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Nom et Prénom
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Groupement
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Email
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Téléphone
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Type
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Ville
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Statut
               </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {state.producers.map((p) => (
+            {currentProducers.map((p, index) => (
               <tr key={p._id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {indexOfFirstProducer + index + 1}
+                </td>
+                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
                   {p.name}
                 </td>
-                <td className="flex flex-row gap-1 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {p.groupName}
+                </td>
+                <td className="flex flex-row gap-1 px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                   <span className="flex items-center gap-2">
                     <Mail size={16} className="text-gray-400" />
                     {p.email}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                   <span className="flex items-center gap-2">
                     <Phone size={16} className="text-gray-400" />
                     {p.telephone}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                      roleColors[p.type] || "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    {p.type}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
                   {p.ville}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-center">
+                <td className="px-4 py-2 whitespace-nowrap text-center">
                   {p.isValidated ? (
                     <CheckCircle2
                       size={24}
@@ -210,7 +376,7 @@ export default function AdminProducers() {
                     />
                   )}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-center flex justify-center gap-2">
+                <td className="px-4 py-2 whitespace-nowrap text-center flex justify-center gap-2">
                   <button
                     onClick={() => handleDetails(p)}
                     className="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
@@ -221,7 +387,15 @@ export default function AdminProducers() {
 
                   <button
                     onClick={() => handleToggleBlock(p._id)}
-                    className="flex items-center justify-center w-8 h-8 rounded-full transition-colors"
+                    className={`
+                      flex items-center gap-1 px-3 py-1 rounded 
+                      transition-colors duration-200
+                      ${
+                        p.isBlocked
+                          ? "bg-red-100 text-red-700 hover:bg-red-200"
+                          : "bg-green-100 text-green-700 hover:bg-green-200"
+                      }
+                    `}
                     title={
                       p.isBlocked
                         ? "Débloquer le producteur"
@@ -229,15 +403,15 @@ export default function AdminProducers() {
                     }
                   >
                     {p.isBlocked ? (
-                      <Lock
-                        size={20}
-                        className="text-red-600 hover:text-red-700"
-                      />
+                      <>
+                        <Unlock size={16} />
+                        Débloquer
+                      </>
                     ) : (
-                      <Unlock
-                        size={20}
-                        className="text-green-600 hover:text-green-700"
-                      />
+                      <>
+                        <Lock size={16} />
+                        Bloquer
+                      </>
                     )}
                   </button>
                 </td>
@@ -247,9 +421,46 @@ export default function AdminProducers() {
         </table>
       </div>
 
+      {/* Contrôles de pagination */}
+      <div className="flex justify-center mt-6 space-x-2">
+        <button
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className="px-4 py-2 rounded-md bg-gray-200 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Précédent
+        </button>
+        {Array.from({ length: totalPages }, (_, i) => (
+          <button
+            key={i + 1}
+            onClick={() => setCurrentPage(i + 1)}
+            className={`
+              px-4 py-2 rounded-md
+              ${
+                currentPage === i + 1
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-700"
+              }
+            `}
+          >
+            {i + 1}
+          </button>
+        ))}
+        <button
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+          }
+          disabled={currentPage === totalPages}
+          className="px-4 py-2 rounded-md bg-gray-200 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Suivant
+        </button>
+      </div>
+
       <ModalProducers
         producer={state.selectedProducer}
         onClose={() => dispatch({ type: "CLOSE_MODAL" })}
+        onUpdate={handleUpdateProducer}
       />
     </div>
   );

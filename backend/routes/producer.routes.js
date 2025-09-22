@@ -7,6 +7,7 @@ const {
   getProducerProfile,
   updateProducerProfile,
   deleteProducerProfile,
+  getProductsByProducer,
 } = require("../controllers/producerController");
 
 // ============================
@@ -27,5 +28,8 @@ router.delete("/me", authenticate("producer"), deleteProducerProfile);
 
 // 🔍 Obtenir un producteur validé par ID (PUBLIC)
 router.get("/:id", getProducerById);
+
+// Tous les produits d’un producteur
+router.get("/:id/products", getProductsByProducer);
 
 module.exports = router;

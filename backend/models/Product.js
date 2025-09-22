@@ -24,11 +24,6 @@ const productSchema = new mongoose.Schema(
       required: [true, "Le prix est requis"],
       min: [0, "Le prix ne peut pas être négatif"],
     },
-    stock: {
-      type: Number,
-      default: 0,
-      min: [0, "Le stock ne peut pas être négatif"],
-    },
     category: {
       type: String,
       trim: true,
@@ -42,16 +37,22 @@ const productSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    status: {
+      type: String,
+      enum: ["en_attente", "valide", "refuse"],
+      default: "en_attente",
+    },
+    isUnavailable: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
-// ✅ AJOUT ICI : méthode statique pour la recherche avancée
+// 🔎 Méthode de recherche avancée
 productSchema.statics.searchProducts = function (filters = {}) {
   const query = {};
 
   if (filters.name) {
-    query.name = { $regex: filters.name, $options: "i" }; // recherche insensible à la casse
+    query.name = { $regex: filters.name, $options: "i" };
   }
 
   if (filters.category) {
@@ -65,5 +66,4 @@ productSchema.statics.searchProducts = function (filters = {}) {
   return this.find(query).populate("producer", "name email");
 };
 
-// ✅ Export final
 module.exports = mongoose.model("Product", productSchema);

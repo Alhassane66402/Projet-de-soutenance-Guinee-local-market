@@ -17,12 +17,13 @@ export const fetchProducerById = async (id) => {
   return response.data;
 };
 
-// 🔹 Récupérer les produits d’un producteur
-export const fetchProductsByProducer = async (producerId) => {
+
+// ✅ Récupérer tous les produits d’un producteur
+export const fetchProductsByProducer = async (id) => {
   try {
-    const response = await api.get(`/products/producer/${producerId}`);
+    const response = await api.get(`/producers/${id}/products`);
     return response.data;
   } catch (error) {
-    throw error.response?.data?.message || "Erreur lors de la récupération des produits";
+    throw error.response?.data?.message || "Erreur lors de la récupération des produits du producteur";
   }
 };

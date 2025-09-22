@@ -26,6 +26,20 @@ export default function Modal({ user, onClose }) {
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, y: 50 }}
         >
+          {/* Header avec titre et bouton fermer */}
+          <div className="flex justify-between items-center px-4 py-2 bg-gray-100">
+            <h1 className="text-2xl font-bold text-gray-800">
+              Détails d'un utilisateur
+            </h1>
+            {/* Bouton de fermeture */}
+            <button
+              onClick={onClose}
+              className="absolute top-2 right-4 text-white hover:text-gray-200 bg-black/30 rounded-full p-2 transition-colors duration-200 z-10"
+              aria-label="Fermer le modal"
+            >
+              <X size={20} />
+            </button>
+          </div>
           {/* Header qui s'adapte en fonction de la présence d'une couverture */}
           <div className="relative">
             {coverUrl ? (
@@ -33,7 +47,7 @@ export default function Modal({ user, onClose }) {
                 <img
                   src={coverUrl}
                   alt="Cover"
-                  className="w-full h-40 md:h-56 object-cover"
+                  className="w-full h-50 md:h-56 object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
               </>
@@ -50,24 +64,15 @@ export default function Modal({ user, onClose }) {
               <img
                 src={avatarUrl}
                 alt="Avatar"
-                className={`w-24 h-24 rounded-full border-4 ${
+                className={`w-35 h-35 rounded-full border-4 ${
                   coverUrl ? "border-white" : "border-gray-200"
-                } object-cover shadow-lg -mb-12`}
+                } shadow-lg -mb-12`}
               />
               <h2 className="ml-4 text-3xl font-bold">{user.name}</h2>
             </div>
-
-            {/* Bouton de fermeture */}
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 text-white hover:text-gray-200 bg-black/30 rounded-full p-2 transition-colors duration-200 z-10"
-              aria-label="Fermer le modal"
-            >
-              <X size={20} />
-            </button>
           </div>
 
-          <div className="p-6 pt-16 space-y-6">
+          <div className="p-6 pt-10 space-y-6">
             {/* Section Informations de base */}
             <div className="bg-gray-50 rounded-lg p-4 shadow-sm">
               <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -78,7 +83,7 @@ export default function Modal({ user, onClose }) {
                   <Mail size={16} className="text-gray-500" />
                   <strong>Email:</strong> {user.email}
                 </p>
-                <p className="flex items-center gap-2">
+                <p className="flex items-center gap-2 col-span-2">
                   <Phone size={16} className="text-gray-500" />
                   <strong>Téléphone:</strong> {user.telephone || "N/A"}
                 </p>

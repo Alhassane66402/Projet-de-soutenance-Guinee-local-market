@@ -1,4 +1,3 @@
-// src/services/adminService.js
 import api from "../utils/axios";
 
 // ✅ Récupérer tous les producteurs
@@ -43,6 +42,20 @@ export const validateProducer = async (producerId) => {
   }
 };
 
+// ✅ Supprimer un producteur
+export const deleteProducer = async (producerId) => {
+  try {
+    const response = await api.delete(`/admin/delete-producer/${producerId}`);
+    return response.data;
+  } catch (error) {
+    throw (
+      error.response?.data?.message ||
+      error.message ||
+      "Erreur lors de la suppression du producteur"
+    );
+  }
+};
+
 // ✅ Récupérer tous les utilisateurs (producteurs et consommateurs)
 export const fetchAllUsers = async () => {
   try {
@@ -71,7 +84,7 @@ export const fetchUserDetail = async (userId) => {
   }
 };
 
-// Bloquer ou débloquer un utilisateur
+// ✅ Bloquer ou débloquer un utilisateur
 export const toggleBlockUser = async (userId) => {
   try {
     const response = await api.put(`/admin/users/${userId}/block`);
@@ -80,3 +93,5 @@ export const toggleBlockUser = async (userId) => {
     throw error.response?.data?.message || "Erreur lors du blocage/déblocage";
   }
 };
+
+

@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { fetchAllUsers, toggleBlockUser } from "../../services/adminService";
 import ModalUsers from "../../components/admin/ModalUsers";
-import Notification from "../../components/admin/Notification";
+import Notification from "../../components/Notification";
 
 const initialState = {
   users: [],
@@ -51,6 +51,12 @@ function reducer(state, action) {
 export default function AdminUsers() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [notificationType, setNotificationType] = useState("success");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage, setUsersPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [cityFilter, setCityFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const roleColors = {
     admin: "bg-purple-100 text-purple-800",
@@ -58,7 +64,6 @@ export default function AdminUsers() {
     consumer: "bg-blue-100 text-blue-800",
   };
 
-  // Charger les utilisateurs
   useEffect(() => {
     const loadUsers = async () => {
       dispatch({ type: "FETCH_START" });
@@ -75,7 +80,6 @@ export default function AdminUsers() {
     loadUsers();
   }, []);
 
-  // Supprimer les notifications après 3s
   useEffect(() => {
     if (state.confirmation || state.error) {
       const timer = setTimeout(
@@ -93,11 +97,8 @@ export default function AdminUsers() {
   const handleToggleBlock = async (userId) => {
     try {
       const res = await toggleBlockUser(userId);
-
-      // Déterminer le type de notification : bloqué = rouge, débloqué = vert
       const isBlocking = res.user.isBlocked;
       setNotificationType(isBlocking ? "error" : "success");
-
       dispatch({
         type: "UPDATE_USER",
         payload: res.user,
@@ -111,6 +112,12 @@ export default function AdminUsers() {
     }
   };
 
+  const handleUsersPerPageChange = (e) => {
+    const newPerPage = Number(e.target.value);
+    setUsersPerPage(newPerPage);
+    setCurrentPage(1);
+  };
+
   if (state.loading) {
     return (
       <div className="p-6 flex justify-center items-center h-full">
@@ -119,11 +126,36 @@ export default function AdminUsers() {
     );
   }
 
-  return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Gestion des utilisateurs</h1>
+  // Obtenir les villes uniques pour le filtre
+  const uniqueCities = [
+    "all",
+    ...new Set(state.users.map((user) => user.ville)),
+  ].filter(Boolean);
 
-      {/* Notifications */}
+  // Filtrer les utilisateurs
+  const filteredUsers = state.users.filter((user) => {
+    const matchesSearch = Object.values(user).some(
+      (value) =>
+        typeof value === "string" &&
+        value.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    const matchesRole = roleFilter === "all" || user.role === roleFilter;
+    const matchesCity = cityFilter === "all" || user.ville === cityFilter;
+    const matchesStatus =
+      statusFilter === "all" || user.isValidated.toString() === statusFilter;
+
+    return matchesSearch && matchesRole && matchesCity && matchesStatus;
+  });
+
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+  return (
+    <div className="mt-18 md:mt-20 lg:mt-10">
+      <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">Gestion des utilisateurs</h1>
+
       {state.confirmation && (
         <Notification
           message={state.confirmation}
@@ -139,12 +171,123 @@ export default function AdminUsers() {
         />
       )}
 
+      {/* En-tête avec filtres et recherche */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-4 gap-4">
+        {/* Filtre de pagination et autres filtres */}
+        <div className="flex flex-wrap gap-4 items-end">
+          {/* Nombre d'utilisateurs par page */}
+          <div className="flex flex-col">
+            <label htmlFor="usersPerPage" className="text-gray-700 font-medium mb-1">
+              Utilisateurs par page :
+            </label>
+            <select
+              id="usersPerPage"
+              value={usersPerPage}
+              onChange={handleUsersPerPageChange}
+              className="px-2 py-1 border border-gray-300 rounded-md"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+          {/* Les autres filtres */}
+          <div className="flex flex-wrap gap-4">
+            {/* Filtre par rôle */}
+            <div className="flex flex-col">
+              <label htmlFor="roleFilter" className="text-gray-700 font-medium mb-1">
+                Rôle :
+              </label>
+              <select
+                id="roleFilter"
+                value={roleFilter}
+                onChange={(e) => {
+                  setRoleFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1 border border-gray-300 rounded-md"
+              >
+                <option value="all">Tous</option>
+                <option value="admin">Admin</option>
+                <option value="producer">Producteur</option>
+                <option value="consumer">Consommateur</option>
+              </select>
+            </div>
+
+            {/* Filtre par ville */}
+            <div className="flex flex-col">
+              <label htmlFor="cityFilter" className="text-gray-700 font-medium mb-1">
+                Ville :
+              </label>
+              <select
+                id="cityFilter"
+                value={cityFilter}
+                onChange={(e) => {
+                  setCityFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1 border border-gray-300 rounded-md"
+              >
+                <option value="all">Toutes</option>
+                {uniqueCities.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filtre par statut */}
+            <div className="flex flex-col">
+              <label htmlFor="statusFilter" className="text-gray-700 font-medium mb-1">
+                Statut :
+              </label>
+              <select
+                id="statusFilter"
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1 border border-gray-300 rounded-md"
+              >
+                <option value="all">Tous</option>
+                <option value="true">Validé</option>
+                <option value="false">Non validé</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Champ de recherche */}
+        <div className="w-full md:w-1/3 flex flex-col items-start">
+          <label htmlFor="search-field" className="text-gray-700 font-medium mb-1">
+            Filtrer :
+          </label>
+          <input
+            id="search-field"
+            type="text"
+            placeholder="Nom, prénom, ville, email, telephone..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
       <div className="overflow-x-auto rounded-lg shadow-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Nom
+                N°
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Nom et prénom
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Email
@@ -167,12 +310,15 @@ export default function AdminUsers() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {state.users.map((u) => (
+            {currentUsers.map((u, index) => (
               <tr key={u._id} className="hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {indexOfFirstUser + index + 1}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {u.name}
                 </td>
-                <td className="flex flex-row gap-1 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <span className="flex items-center gap-2">
                     <Mail size={16} className="text-gray-400" />
                     {u.email}
@@ -222,23 +368,31 @@ export default function AdminUsers() {
 
                   <button
                     onClick={() => handleToggleBlock(u._id)}
-                    className="flex items-center justify-center w-8 h-8 rounded-full transition-colors"
+                    className={`
+                      flex items-center gap-1 px-3 py-1 rounded
+                      transition-colors duration-200
+                      ${
+                        u.isBlocked
+                          ? "bg-red-100 text-red-700 hover:bg-red-200"
+                          : "bg-green-100 text-green-700 hover:bg-green-200"
+                      }
+                    `}
                     title={
                       u.isBlocked
-                        ? "Débloquer l'utilisateur"
-                        : "Bloquer l'utilisateur"
+                        ? "Débloquer le producteur"
+                        : "Bloquer le producteur"
                     }
                   >
                     {u.isBlocked ? (
-                      <Lock
-                        size={20}
-                        className="text-red-600 hover:text-red-700"
-                      />
+                      <>
+                        <Unlock size={16} />
+                        Débloquer
+                      </>
                     ) : (
-                      <Unlock
-                        size={20}
-                        className="text-green-600 hover:text-green-700"
-                      />
+                      <>
+                        <Lock size={16} />
+                        Bloquer
+                      </>
                     )}
                   </button>
                 </td>
@@ -246,6 +400,42 @@ export default function AdminUsers() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Contrôles de pagination */}
+      <div className="flex justify-center mt-6 space-x-2">
+        <button
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className="px-4 py-2 rounded-md bg-gray-200 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Précédent
+        </button>
+        {Array.from({ length: totalPages }, (_, i) => (
+          <button
+            key={i + 1}
+            onClick={() => setCurrentPage(i + 1)}
+            className={`
+              px-4 py-2 rounded-md
+              ${
+                currentPage === i + 1
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-700"
+              }
+            `}
+          >
+            {i + 1}
+          </button>
+        ))}
+        <button
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+          }
+          disabled={currentPage === totalPages}
+          className="px-4 py-2 rounded-md bg-gray-200 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Suivant
+        </button>
       </div>
 
       <ModalUsers

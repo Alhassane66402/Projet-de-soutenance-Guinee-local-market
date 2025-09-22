@@ -21,9 +21,14 @@ const orderItemSchema = new mongoose.Schema({
     required: true,
     min: [0, "Le total doit être positif"],
   },
+  negotiation: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Negotiation",
+    default: null,
+  },
 });
 
-// ✅ Middleware Mongoose pour calculer automatiquement le total avant d'enregistrer
+// ✅ Calcul du total automatiquement
 orderItemSchema.pre("save", function (next) {
   this.total = this.quantity * this.price;
   next();
